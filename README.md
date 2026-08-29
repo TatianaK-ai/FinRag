@@ -4,7 +4,7 @@
 ![LangChain](https://img.shields.io/badge/LangChain-LangGraph-1C3C3C?style=flat-square)
 ![Pinecone](https://img.shields.io/badge/Pinecone-vector%20store-6f4cff?style=flat-square)
 ![FastAPI](https://img.shields.io/badge/FastAPI-server-009688?style=flat-square&logo=fastapi&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-32%20passing-3fb950?style=flat-square)
+[![tests](https://github.com/TatianaK-ai/FinRag/actions/workflows/tests.yml/badge.svg)](https://github.com/TatianaK-ai/FinRag/actions/workflows/tests.yml)
 
 A retrieval-augmented question-answering system over public SEC filings
 (Apple, Microsoft, NVIDIA — 10-K and 10-Q). It answers questions with a figure
@@ -83,6 +83,12 @@ OpenAI server (`tests/mock_openai.py`) serves hashed bag-of-words embeddings and
 schema-shaped completions, so the whole pipeline runs end to end. It builds into
 `DATA_DIR=data-test` so it can never overwrite a real index. Offline numbers
 prove the wiring, never the quality.
+
+The `tests` badge above runs `pytest` on GitHub Actions (Python 3.10 and 3.12).
+CI covers the deterministic layers only — cleaning, tokenising, fusion, the
+scope and guidance guards, auth and rate limiting. The graph and retrieval tests
+skip there, because they need an index built from `data/raw/`, which is not in
+the repository. `python tests/offline.py` is the full 32-test gate.
 
 ## Layout
 

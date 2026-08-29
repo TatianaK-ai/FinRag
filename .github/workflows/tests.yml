@@ -1,0 +1,42 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # The suite answers every model call from tests/mock_openai.py, so this
+      # needs no credentials and spends nothing. The tests that take the `built`
+      # fixture skip here: they need an index built from data/raw/, which is
+      # gitignored (~22 MB of EDGAR HTML). `-rs` prints each skip so a shrinking
+      # run is visible in the log rather than silent.
+      #
+      # The full 32-test gate is `python tests/offline.py`, run locally: it
+      # fetches the filings, builds both indexes against the mock, then runs
+      # this same suite with nothing skipped.
+      - name: Run offline test suite
+        run: python -m pytest -q -rs

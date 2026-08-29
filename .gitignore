@@ -28,3 +28,7 @@ out/
 # IDE
 .idea/
 .vscode/
+
+# Session handoff notes: local working context, not project documentation.
+# The engineering findings it carried live in docs/PROJECT.md sections 4-5.
+HANDOFF.md
