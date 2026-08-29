@@ -1,5 +1,11 @@
 # FinRAG — Financial Document Intelligence
 
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-LangGraph-1C3C3C?style=flat-square)
+![Pinecone](https://img.shields.io/badge/Pinecone-vector%20store-6f4cff?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-server-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-32%20passing-3fb950?style=flat-square)
+
 A retrieval-augmented question-answering system over public SEC filings
 (Apple, Microsoft, NVIDIA — 10-K and 10-Q). It answers questions with a figure
 and a citation back to the exact passage in the exact filing, and **refuses**
