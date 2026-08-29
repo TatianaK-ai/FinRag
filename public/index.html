@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FinRAG — SEC Filing Intelligence</title>
+<style>
+  :root {
+    --bg: #0e1117; --panel: #161b22; --line: #262d38; --ink: #e6edf3;
+    --muted: #8b949e; --accent: #4493f8; --good: #3fb950; --warn: #d29922; --bad: #f85149;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fff; --panel:#f6f8fa; --line:#d0d7de; --ink:#1f2328; --muted:#656d76; --accent:#0969da; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { border-bottom:1px solid var(--line); padding:14px 20px; display:flex; gap:16px;
+    align-items:baseline; flex-wrap:wrap; }
+  h1 { font-size:16px; margin:0; font-weight:600; letter-spacing:-.01em; }
+  .sub { color:var(--muted); font-size:13px; }
+  main { max-width:900px; margin:0 auto; padding:20px; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  select, button, input { font:inherit; color:var(--ink); background:var(--panel);
+    border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
+  button { cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:500; }
+  button:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:8px; }
+  .row input { flex:1; }
+  .msg { border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin:14px 0;
+    background:var(--panel); }
+  .msg.q { background:transparent; border-style:dashed; }
+  .msg.q b { color:var(--muted); font-weight:500; font-size:13px; display:block; margin-bottom:4px; }
+  .answer { white-space:pre-wrap; }
+  .answer code { font-family:var(--mono); font-size:.9em; }
+  .meta { margin-top:12px; padding-top:10px; border-top:1px solid var(--line);
+    display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+  .pill { border:1px solid var(--line); border-radius:20px; padding:2px 9px; font-size:12px; }
+  .pill.good { color:var(--good); border-color:var(--good); }
+  .pill.bad { color:var(--bad); border-color:var(--bad); }
+  .pill.warn { color:var(--warn); border-color:var(--warn); }
+  details { margin-top:10px; }
+  summary { cursor:pointer; color:var(--muted); font-size:13px; }
+  .trace { font-family:var(--mono); font-size:12px; margin-top:8px; }
+  .trace div { padding:3px 0; border-bottom:1px solid var(--line); }
+  .trace b { color:var(--accent); font-weight:600; }
+  .src { font-size:13px; margin-top:8px; padding:8px 10px; border-left:2px solid var(--accent);
+    background:rgba(68,147,248,.06); }
+  .src a { color:var(--accent); }
+  .examples { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .examples button { font-size:12.5px; padding:5px 9px; color:var(--muted); }
+  .keybar { display:flex; gap:8px; align-items:center; margin-left:auto; }
+  .keybar input { width:220px; }
+  .keymsg { font-size:12.5px; }
+  .keymsg.bad { color:var(--bad); }
+  .keymsg.good { color:var(--good); }
+  .lock { font-size:12.5px; color:var(--warn); }
+  .spin { display:inline-block; animation:s 1s linear infinite; }
+  @keyframes s { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>FinRAG</h1>
+  <span class="sub" id="corpus">loading corpus…</span>
+  <span class="lock" id="lock" hidden>&#128274; locked</span>
+  <form class="keybar" id="keybar" hidden autocomplete="off">
+    <label class="sub" for="key">API key</label>
+    <input type="password" id="key" placeholder="paste key" autocomplete="off" spellcheck="false" />
+    <button class="primary" type="submit" id="keysave">Unlock</button>
+    <span class="keymsg" id="keymsg"></span>
+  </form>
+</header>
+<main>
+
+  <div class="examples" id="examples"></div>
+
+  <div class="row">
+    <input id="q" placeholder="Ask about the indexed filings…" autocomplete="off" />
+    <button class="primary" id="go">Ask</button>
+  </div>
+
+  <div id="thread"></div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const thread = $('#thread');
+
+/**
+ * The API key is held in sessionStorage, so it survives a reload but not a
+ * closed tab, and is never written to the URL or localStorage. It is sent as a
+ * header - a query parameter would end up in proxy and server logs.
+ */
+let apiKey = sessionStorage.getItem('finrag_key') || '';
+let authRequired = false;
+const authHeaders = () => (apiKey ? { Authorization: `Bearer ${apiKey}` } : {});
+
+/**
+ * The key is collected in-page rather than through window.prompt.
+ *
+ * A prompt() is a blocking browser modal: it cannot be styled, it halts the
+ * page, and it blocks automated drivers outright. An inline field also lets a
+ * rejected key be reported next to the input that caused it.
+ *
+ * Stored in sessionStorage - survives a reload, dies with the tab - and sent as
+ * an Authorization header, never as a query parameter, which proxies log.
+ */
+function showKeyBar(message, tone) {
+  $('#keybar').hidden = false;
+  $('#lock').hidden = tone === 'good';
+  const el = $('#keymsg');
+  el.textContent = message || '';
+  el.className = 'keymsg' + (tone ? ' ' + tone : '');
+  if (tone !== 'good') $('#key').focus();
+}
+
+function setKey(value) {
+  apiKey = (value || '').trim();
+  if (apiKey) sessionStorage.setItem('finrag_key', apiKey);
+  else sessionStorage.removeItem('finrag_key');
+}
+
+$('#keybar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  setKey($('#key').value);
+  $('#key').value = '';
+  if (!apiKey) return showKeyBar('Enter a key.', 'bad');
+  showKeyBar('checking…', '');
+  const ok = await loadInfo();
+  if (ok) {
+    showKeyBar('unlocked', 'good');
+    $('#lock').hidden = true;
+    setTimeout(() => { $('#keybar').hidden = true; }, 1200);
+  } else {
+    showKeyBar('key rejected', 'bad');
+  }
+});
+
+/** Fetch corpus info; a 401 means the key is missing or wrong. */
+async function loadInfo() {
+  try {
+    const res = await fetch('/api/info', { headers: authHeaders() });
+    if (res.status === 401) return false;
+    const info = await res.json();
+    $('#corpus').textContent =
+      `${info.documents.length} filings · ${info.companies.map(c => c.ticker).join(', ')} · ` +
+      `${info.models.generator} · vectors: ${info.backend}`;
+    $('#examples').innerHTML = EXAMPLES.map(e =>
+      `<button data-q="${e.replace(/"/g, '&quot;')}">${e}</button>`).join('');
+    document.querySelectorAll('#examples button').forEach(b =>
+      b.onclick = () => { $('#q').value = b.dataset.q; send(); });
+    return true;
+  } catch {
+    $('#corpus').textContent = 'corpus unavailable — run `python -m finrag.build`';
+    return false;
+  }
+}
+
+(async function init() {
+  const status = await fetch('/api/auth-status').then(r => r.json()).catch(() => ({}));
+  authRequired = Boolean(status.authRequired);
+  const ok = await loadInfo();
+  if (authRequired && !ok) showKeyBar(apiKey ? 'stored key rejected' : 'a key is required', 'bad');
+})();
+
+const EXAMPLES = [
+  "What were Apple's total net sales in fiscal 2025?",
+  "What was NVIDIA's gross margin in fiscal 2026?",
+  "Compare Microsoft and NVIDIA annual revenue",
+  "How much did Tesla spend on R&D?",
+  "What was revenue last year?",
+];
+
+const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]));
+
+function render(r) {
+  const v = r.verification;
+  const pills = [
+    `<span class="pill">${r.totalMs} ms</span>`,
+    r.refused
+      ? `<span class="pill warn">refused</span>`
+      : `<span class="pill good">answered</span>`,
+    v ? `<span class="pill ${v.grounded ? 'good' : 'bad'}">faithfulness ${v.faithfulness}</span>` : '',
+    r.confidence ? `<span class="pill">confidence ${r.confidence}</span>` : '',
+  ].filter(Boolean).join(' ');
+
+  const sources = (r.citations ?? []).map(c =>
+    `<div class="src">[${c.n}] <b>${esc(c.company)}</b> ${esc(c.form)} · filed ${esc(c.filingDate)}<br />
+     <span class="sub">${esc(c.section)}</span><br />
+     <a href="${esc(c.sourceUrl)}" target="_blank" rel="noopener">view on EDGAR ↗</a></div>`).join('');
+
+  const trace = (r.trace ?? []).map(t =>
+    `<div><b>${esc(t.node)}</b> · ${t.ms}ms — ${esc(t.detail)}</div>`).join('');
+
+  const ctx = (r.contexts ?? []).map(c =>
+    `<div class="trace"><b>${esc(c.ticker)} ${esc(c.form)}</b> ${c.isTable ? '· table' : ''}
+     ${c.rerankScore != null ? `· score ${c.rerankScore}/10` : ''}<br />
+     <span class="sub">${esc(c.section)}</span><br />${esc(c.preview)}…</div>`).join('');
+
+  return `<div class="msg">
+    <div class="answer">${esc(r.answer).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</div>
+    ${sources}
+    <div class="meta">${pills}</div>
+    <details><summary>Graph trace (${(r.trace ?? []).length} steps)</summary><div class="trace">${trace}</div></details>
+    ${ctx ? `<details><summary>Retrieved passages (${(r.contexts ?? []).length})</summary>${ctx}</details>` : ''}
+  </div>`;
+}
+
+async function send() {
+  const question = $('#q').value.trim();
+  if (!question) return;
+  $('#q').value = '';
+  $('#go').disabled = true;
+
+  thread.insertAdjacentHTML('afterbegin',
+    `<div class="msg q"><b>question</b>${esc(question)}</div>`);
+  const pending = document.createElement('div');
+  pending.className = 'msg';
+  pending.innerHTML = '<span class="spin">◐</span> retrieving…';
+  thread.insertBefore(pending, thread.firstChild);
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      // No retrieval knobs in the UI. Every non-default setting measured worse -
+      // dense-only drops hit@6 from 1.000 to 0.706, and reranking off produced 10
+      // wrong figures in 38 answers against 0 in 50 with it. Offering that as a
+      // user choice would invite people to make the app give them a wrong number.
+      // The comparison the brief asks for lives in `python -m finrag.evals.run` ->
+      // out/REPORT.md,
+      // and the CLI keeps --strategy/--mode/--no-rerank for reproducing it.
+      body: JSON.stringify({ question, strategy: 'semantic', mode: 'hybrid', rerank: true }),
+    });
+    const r = await res.json();
+    if (res.status === 401) {
+      showKeyBar('key rejected — unlock and resend', 'bad');
+      pending.outerHTML = `<div class="msg"><span class="pill bad">unauthorized</span> Enter a valid API key above, then resend.</div>`;
+      return;
+    }
+    if (res.status === 429) {
+      pending.outerHTML = `<div class="msg"><span class="pill warn">rate limited</span> ${esc(r.error)}${
+        r.retryAfterSeconds ? ` — retry in ${r.retryAfterSeconds}s.` : ''}</div>`;
+      return;
+    }
+    pending.outerHTML = r.error
+      ? `<div class="msg"><span class="pill bad">error</span> ${esc(r.error)}</div>`
+      : render(r);
+  } catch (e) {
+    pending.outerHTML = `<div class="msg"><span class="pill bad">error</span> ${esc(e.message)}</div>`;
+  } finally {
+    $('#go').disabled = false;
+    $('#q').focus();
+  }
+}
+
+$('#go').onclick = send;
+$('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+</script>
+</body>
+</html>

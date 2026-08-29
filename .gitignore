@@ -1,0 +1,30 @@
+# Secrets. .env holds live API keys - never commit it.
+.env
+
+# Virtualenv
+.venv/
+venv/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Derived artefacts. Raw filings are ~22 MB of EDGAR HTML and everything under
+# processed/ and index/ is rebuildable from them with `python -m finrag.build`.
+data/raw/
+data/processed/
+data/index/
+data-test/
+
+# Evaluation output. REPORT.md is regenerated from eval-results.json, which is
+# a full transcript of every judged answer - large, and stale the moment the
+# corpus or the prompts change.
+out/
+
+# IDE
+.idea/
+.vscode/

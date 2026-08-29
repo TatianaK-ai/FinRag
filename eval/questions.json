@@ -1,0 +1,419 @@
+{
+  "_about": {
+    "corpus": "Latest 10-K and 10-Q for AAPL, MSFT, NVDA as filed on SEC EDGAR (fetched 2026-08-26).",
+    "authoring": "Every gold figure was read directly out of the cleaned filing text in data/processed, not from memory or an external source. `evidence` regexes define which retrieved chunks count as relevant for recall/MRR/nDCG. Numeric evidence accepts either rendering a filing may use - the tabulated figure (215,938) or the MD&A prose form ($215.9 billion) - since both genuinely answer the question; matching only the former understated retrieval scores.",
+    "behaviour": "answer = must produce a cited answer; refuse = must decline (fact is outside the corpus); clarify = underspecified, must either decline or explicitly flag the ambiguity.",
+    "note": "Fiscal years differ by issuer: Apple FY2025 ended 2025-09-27, Microsoft FY2026 ended 2026-06-30, NVIDIA FY2026 ended 2026-01-25. Several questions exist specifically to test whether the system keeps those periods straight."
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "category": "factual-single",
+      "question": "What were Apple's total net sales in fiscal 2025?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "416,161|416\\.2 billion"
+      ],
+      "gold": "Apple reported total net sales of $416,161 million for fiscal 2025, up 6% from $391,035 million in fiscal 2024."
+    },
+    {
+      "id": "q02",
+      "category": "table-lookup",
+      "question": "How much revenue did Apple's Services segment generate in fiscal 2025, and how did it change year over year?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "109,158|109\\.2 billion"
+      ],
+      "gold": "Services net sales were $109,158 million in fiscal 2025, up 14% from $96,169 million in fiscal 2024."
+    },
+    {
+      "id": "q03",
+      "category": "table-lookup",
+      "question": "What were Apple's net sales in Greater China in fiscal 2025 and did they grow?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "64,377|64\\.4 billion"
+      ],
+      "gold": "Greater China net sales were $64,377 million in fiscal 2025, a 4% decline from $66,952 million in fiscal 2024. It was Apple's only reporting segment to shrink."
+    },
+    {
+      "id": "q04",
+      "category": "table-lookup",
+      "question": "How much did Apple spend on research and development in fiscal 2025, and what percentage of net sales was that?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "34,550|34\\.5 billion"
+      ],
+      "gold": "Apple spent $34,550 million on research and development in fiscal 2025, up 10% year over year, representing 8% of total net sales."
+    },
+    {
+      "id": "q05",
+      "category": "table-lookup",
+      "question": "What was Apple's total gross margin in fiscal 2025, split between Products and Services?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "195,201|195\\.2 billion",
+        "112,887|112\\.9 billion",
+        "82,314|82\\.3 billion"
+      ],
+      "gold": "Total gross margin was $195,201 million in fiscal 2025: $112,887 million from Products and $82,314 million from Services."
+    },
+    {
+      "id": "q06",
+      "category": "factual-single",
+      "question": "What was Microsoft's total revenue for fiscal year 2026?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "MSFT"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "331,839|331\\.8 billion"
+      ],
+      "gold": "Microsoft reported total revenue of $331,839 million for the fiscal year ended June 30, 2026, up from $281,724 million in fiscal 2025."
+    },
+    {
+      "id": "q07",
+      "category": "table-lookup",
+      "question": "How does Microsoft split its fiscal 2026 revenue between Product and Service and other?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "MSFT"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "64,696|64\\.7 billion",
+        "267,143|267\\.1 billion"
+      ],
+      "gold": "For fiscal 2026 Microsoft reported $64,696 million of Product revenue and $267,143 million of Service and other revenue, totalling $331,839 million."
+    },
+    {
+      "id": "q08",
+      "category": "factual-single",
+      "question": "What was NVIDIA's revenue for fiscal year 2026 and how much did it grow?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "215,938|215\\.9 billion"
+      ],
+      "gold": "NVIDIA reported revenue of $215,938 million for the fiscal year ended January 25, 2026, up 65% from $130,497 million in fiscal 2025."
+    },
+    {
+      "id": "q09",
+      "category": "table-lookup",
+      "question": "What was NVIDIA's gross margin in fiscal 2026 and how did it move versus the prior year?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "71\\.1"
+      ],
+      "gold": "NVIDIA's gross margin was 71.1% in fiscal 2026, down 3.9 percentage points from 75.0% in fiscal 2025."
+    },
+    {
+      "id": "q10",
+      "category": "table-lookup",
+      "question": "What was NVIDIA's operating income and net income in fiscal 2026?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "130,387|130\\.4 billion",
+        "120,067|120\\.1 billion"
+      ],
+      "gold": "NVIDIA reported operating income of $130,387 million (up 60%) and net income of $120,067 million (up 65%) in fiscal 2026."
+    },
+    {
+      "id": "q11",
+      "category": "factual-single",
+      "question": "What was Microsoft's total revenue in the three months ended March 31, 2026?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "MSFT"
+        ],
+        "forms": [
+          "10-Q"
+        ]
+      },
+      "evidence": [
+        "82,886|82\\.9 billion"
+      ],
+      "gold": "Microsoft reported total revenue of $82,886 million for the three months ended March 31, 2026, versus $70,066 million a year earlier."
+    },
+    {
+      "id": "q12",
+      "category": "table-lookup",
+      "question": "What were NVIDIA's total operating expenses in fiscal 2026?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "23,076|23\\.1 billion"
+      ],
+      "gold": "NVIDIA's operating expenses were $23,076 million in fiscal 2026, up 41% year over year."
+    },
+    {
+      "id": "q13",
+      "category": "factual-single",
+      "question": "How much revenue did Apple's iPhone product line generate in fiscal 2025?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "209,586|209\\.6 billion"
+      ],
+      "gold": "iPhone net sales were $209,586 million in fiscal 2025, up 4% from $201,183 million in fiscal 2024."
+    },
+    {
+      "id": "q14",
+      "category": "multi-doc",
+      "question": "Which company had higher total annual revenue in its most recent fiscal year, Microsoft or NVIDIA, and by how much?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "MSFT",
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "331,839|331\\.8 billion",
+        "215,938|215\\.9 billion"
+      ],
+      "gold": "Microsoft, at $331,839 million for FY2026 (ended June 30, 2026), versus NVIDIA at $215,938 million for FY2026 (ended January 25, 2026) - a difference of about $115,901 million. Note the fiscal years are not aligned."
+    },
+    {
+      "id": "q15",
+      "category": "multi-doc",
+      "question": "Compare Apple's and NVIDIA's most recent full-year revenue.",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL",
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "416,161|416\\.2 billion",
+        "215,938|215\\.9 billion"
+      ],
+      "gold": "Apple reported $416,161 million of net sales for fiscal 2025 (ended September 27, 2025); NVIDIA reported $215,938 million of revenue for fiscal 2026 (ended January 25, 2026). Apple is roughly 1.9x NVIDIA."
+    },
+    {
+      "id": "q16",
+      "category": "multi-doc",
+      "question": "Which of the three companies in this corpus grew revenue fastest in its latest fiscal year?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL",
+          "MSFT",
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "215,938|215\\.9 billion",
+        "416,161|416\\.2 billion",
+        "331,839|331\\.8 billion"
+      ],
+      "gold": "NVIDIA, at 65% growth (to $215,938 million in FY2026), well ahead of Microsoft (about 18%, to $331,839 million) and Apple (6%, to $416,161 million)."
+    },
+    {
+      "id": "q17",
+      "category": "multi-doc",
+      "question": "How does R&D intensity compare between Apple and NVIDIA in their latest fiscal years?",
+      "expect": {
+        "behaviour": "answer",
+        "tickers": [
+          "AAPL",
+          "NVDA"
+        ],
+        "forms": [
+          "10-K"
+        ]
+      },
+      "evidence": [
+        "34,550|34\\.5 billion",
+        "8\\.6 \\| 9\\.9"
+      ],
+      "gold": "Apple's R&D was $34,550 million in fiscal 2025, about 8% of net sales. NVIDIA's R&D was 8.6% of revenue in fiscal 2026, down from 9.9% the prior year. The two are comparable as a share of revenue."
+    },
+    {
+      "id": "q18",
+      "category": "ambiguous",
+      "question": "What was revenue last year?",
+      "expect": {
+        "behaviour": "clarify",
+        "tickers": [
+          "AAPL",
+          "MSFT",
+          "NVDA"
+        ]
+      },
+      "evidence": [],
+      "gold": "Underspecified: the corpus holds three issuers with three different fiscal calendars. The system should ask which company (and which fiscal year), or answer for all three with each period stated explicitly."
+    },
+    {
+      "id": "q19",
+      "category": "ambiguous",
+      "question": "How much did they spend on research and development?",
+      "expect": {
+        "behaviour": "clarify",
+        "tickers": [
+          "AAPL",
+          "MSFT",
+          "NVDA"
+        ]
+      },
+      "evidence": [],
+      "gold": "Underspecified: no company named. The system should ask which issuer rather than silently picking one."
+    },
+    {
+      "id": "q20",
+      "category": "ambiguous",
+      "question": "What was the gross margin percentage?",
+      "expect": {
+        "behaviour": "clarify",
+        "tickers": [
+          "AAPL",
+          "MSFT",
+          "NVDA"
+        ]
+      },
+      "evidence": [],
+      "gold": "Underspecified: company and period both missing. NVIDIA's FY2026 gross margin of 71.1% is the most prominent match, but answering with it unqualified would be wrong."
+    },
+    {
+      "id": "q21",
+      "category": "unanswerable",
+      "question": "What is Apple's revenue forecast for fiscal 2027?",
+      "expect": {
+        "behaviour": "refuse",
+        "tickers": []
+      },
+      "evidence": [],
+      "gold": "Must refuse. Apple does not publish forward revenue guidance in its 10-K, so this is not in the corpus."
+    },
+    {
+      "id": "q22",
+      "category": "unanswerable",
+      "question": "How much did Tesla spend on research and development in 2025?",
+      "expect": {
+        "behaviour": "refuse",
+        "tickers": []
+      },
+      "evidence": [],
+      "gold": "Must refuse. Tesla is not in this corpus, which covers only AAPL, MSFT and NVDA."
+    },
+    {
+      "id": "q23",
+      "category": "unanswerable",
+      "question": "What was the total compensation package of Microsoft's CEO in fiscal 2026?",
+      "expect": {
+        "behaviour": "refuse",
+        "tickers": []
+      },
+      "evidence": [],
+      "gold": "Must refuse. Item 11 (Executive Compensation) is incorporated by reference to the proxy statement and its figures are not present in the 10-K itself. This is the hardest refusal in the set: the section heading exists in the corpus and retrieves well, but contains no numbers."
+    },
+    {
+      "id": "q24",
+      "category": "unanswerable",
+      "question": "What price did NVIDIA pay to acquire Intel's foundry business?",
+      "expect": {
+        "behaviour": "refuse",
+        "tickers": []
+      },
+      "evidence": [],
+      "gold": "Must refuse. No such transaction appears in the filings; the premise is false. The system must not confabulate a figure to satisfy the question's assumption."
+    }
+  ]
+}

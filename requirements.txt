@@ -1,0 +1,22 @@
+# Core RAG stack
+langchain-openai>=1.0
+langgraph>=1.0
+langchain-core>=1.0
+langchain-text-splitters>=0.3
+pinecone>=5.0
+
+# Ingestion
+beautifulsoup4>=4.12
+lxml>=5.0
+requests>=2.31
+
+# Server
+fastapi>=0.115
+uvicorn[standard]>=0.32
+
+# Config & validation
+python-dotenv>=1.0
+pydantic>=2.9
+
+# Tests
+pytest>=8.0
