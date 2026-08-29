@@ -14,7 +14,23 @@ when the filings do not support an answer.
 Built with LangChain + LangGraph (Python), Pinecone, OpenAI.
 
 Full write-up: [`docs/PROJECT.md`](docs/PROJECT.md) · framework:
-[`docs/FRAMEWORK.md`](docs/FRAMEWORK.md) · latest evaluation: `out/REPORT.md`.
+[`docs/FRAMEWORK.md`](docs/FRAMEWORK.md) · latest evaluation: `out/REPORT.md` ·
+documentation PDF: [`docs/FinRAG-Documentation.pdf`](docs/FinRAG-Documentation.pdf).
+
+## Demo
+
+https://github.com/user-attachments/assets/eac1c2bd-ba70-4d93-9eb6-576f6b84a639
+
+3:37 against the running server — a grounded answer with six EDGAR citations, two
+refusals (out-of-corpus, then a false premise caught by the entity-grounding
+gate), a clarification with the graph trace expanded, then the architecture and
+the evaluation results with their limits.
+
+If the player above does not load, it also plays on
+[issue #1](https://github.com/TatianaK-ai/FinRag/issues/1). The file is committed
+at [`demo/finrag-demo-live.mp4`](demo/finrag-demo-live.mp4), but GitHub serves
+repository files as `application/octet-stream`, so that link downloads rather
+than plays.
 
 ```
 $ python -m finrag.cli "What was NVIDIA's gross margin in fiscal 2026?"
