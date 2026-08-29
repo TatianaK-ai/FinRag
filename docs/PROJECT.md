@@ -101,7 +101,7 @@ Both handle tables **identically** (atomic, split by row group with the header r
 Five model calls, each with a narrow job. Full text lives in `finrag/graph/rag.py` and `finrag/retrieval/rerank.py`.
 
 ### Scope gate (`gpt-4.1-mini`)
-Decides whether the question says *which company* it means — judged on the **question text alone**, before retrieval, so the decision cannot be biased by whichever issuer retrieval happened to surface.
+Decides whether the question says *which company* it means — judged on the **question text alone**. `scope` and `retrieve` run concurrently from `START` and join at `gate`, so scope never sees the passages and cannot be biased by whichever issuer retrieval happened to surface.
 
 > *"isAmbiguous=true ONLY when the question refers to a company merely as 'they', 'the company', or not at all… A company named but ABSENT from the corpus (e.g. Tesla) is NOT ambiguous — the subject is perfectly clear."*
 
@@ -161,7 +161,7 @@ Ordered roughly as they happened. Each was driven by a measurement, not a hunch.
 12. **Refusal designed first**, then extended twice *because evaluation caught it failing*:
     - **`premise`** — asked for FY2027 revenue guidance, the system answered `$7,652 million` from a 2027 lease-maturity column. Grounded, cited, and wrong.
     - **`verify.answersTheQuestion`** — grounding alone is not enough; an answer can quote a passage perfectly and be about a different fact.
-13. **Clarification in the generator → didn't work.** Shown six NVIDIA passages, it reasonably concluded the question was about NVIDIA. Ambiguity is a property of the *question*, so `scope` became its own node judged before retrieval.
+13. **Clarification in the generator → didn't work.** Shown six NVIDIA passages, it reasonably concluded the question was about NVIDIA. Ambiguity is a property of the *question*, so `scope` became its own node, judged on the question text alone and never shown the retrieved passages.
 14. **Scope on `gpt-4.1-nano` → reverted.** Saved 260 ms and broke behaviour classification: correct refusal fell **100% → 25%**. Documented in `config.py` so it is not re-attempted.
 15. **Entity grounding gate** — see §5.
 16. **Schema field descriptions are part of the prompt.** Structured-output schemas are serialised into the request, so the one-line description on each field steers the model as much as the system prompt does. Shipping `ScopeOut` with bare `bool` fields made *"which of the three companies grew revenue fastest"* read as ambiguous in **3 runs out of 3** — nothing told the model that deliberately spanning all issuers still identifies the subject. Restoring the system prompt alone did **not** fix it; restoring the field descriptions did. **Answer rate 94.1% → 100%.**

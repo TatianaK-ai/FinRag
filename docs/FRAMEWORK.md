@@ -42,25 +42,26 @@ Dense retrieval and BM25 fail in opposite directions on this corpus, which is th
 The brief's point — that the "I don't know" path matters more than the happy path — is taken literally here: the graph was built refusal-first, and there are **four independent gates** before any answer is returned. Two of them (`premise` and the question-match half of `verify`) were added *because* evaluation caught them missing.
 
 ```
-START → scope ──ambiguous──→ clarify → END
-          │
-      identified
-          ↓
-      retrieve → [rerank] → grade ──insufficient──→ refuse → END
-                              │
-                          sufficient
-                              ↓
-                          generate ──false premise───→ refuse → END
-                              │    ──not answerable──→ refuse → END
-                              ↓
-                           verify ──ungrounded────────→ refuse → END
-                              │    ──answers the wrong
-                              │      question─────────→ refuse → END
-                              ↓
-                             END
+        ┌─→ scope ────┐
+START ──┤             ├──→ gate ──ambiguous──→ clarify → END
+        └─→ retrieve ─┘             │
+     (fan out in parallel,      identified
+      join at the gate)             ↓
+                              [rerank] → grade ──insufficient──→ refuse → END
+                                           │
+                                       sufficient
+                                           ↓
+                                       generate ──false premise───→ refuse → END
+                                           │    ──not answerable──→ refuse → END
+                                           ↓
+                                        verify ──ungrounded────────→ refuse → END
+                                           │    ──answers the wrong
+                                           │      question─────────→ refuse → END
+                                           ↓
+                                          END
 ```
 
-1. **`scope`** — does the question even say which issuer it means? Judged on the question alone, before retrieval, so the decision cannot be biased by whichever issuer retrieval happened to surface. Underspecified → `clarify`, which asks back. (Folding this into the generator did *not* work: shown six NVIDIA passages, it reasonably concluded the question was about NVIDIA.)
+1. **`scope`** — does the question even say which issuer it means? Judged on the question text alone: `scope` and `retrieve` fan out from `START` in parallel and join at `gate`, so scope never sees the passages and its verdict cannot be biased by whichever issuer retrieval happened to surface. Underspecified → `clarify`, which asks back. (Folding this into the generator did *not* work: shown six NVIDIA passages, it reasonably concluded the question was about NVIDIA.)
 2. **`grade`** — is the retrieved evidence good enough to attempt an answer? When reranking has run, its calibrated 0–10 relevance is reused (no second round-trip); otherwise an explicit LLM grader decides. Best passage below 4/10 → refuse.
 3. **`premise`** — does the question assume something the filings do not report? The generator must name the fact requested *before* answering, which is what stops it accepting a figure that merely shares a fiscal year. Asked for FY2027 revenue guidance, it previously answered from a 2027 lease-maturity figure — grounded, cited, and wrong.
 4. **`verify`** — reads the answer back against its passages, checking two things: every claim supported, **and** that the answer addresses the metric, company and period actually asked about. Grounding alone is not sufficient.
